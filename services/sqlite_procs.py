@@ -19,3 +19,8 @@ def getDbSession(db_name: str = 'AttendanceV2.db'):
         Session = sessionmaker(bind=engine)
         db_session = Session()
     return db_session
+
+def getNewDbSession(db_name: str = 'AttendanceV2.db'):
+    engine = create_engine(f'sqlite:///{getDbPath(db_name)}')
+    Session = sessionmaker(bind=engine)
+    return Session()

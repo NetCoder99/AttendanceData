@@ -13,18 +13,17 @@ from sqlalchemy.orm import Session
 import constants
 from data.Models import Ranks, Stripes, Requirements, Belts, AttendanceV1
 from services.class_schedules import FindClosestClass
-from services.sqlite_procs import getDbSession, getDbPath
+from services.sqlite_procs import getDbSession, getDbPath, getNewDbSession
 
-srce_db_session = None
-dest_db_session = None
+srce_db_name    = 'AttendanceV2_20251107.db'
+srce_db_session = getNewDbSession(srce_db_name)
 
-srce_db_name = 'AttendanceV2_20251107.db'
-dest_db_name = 'AttendanceRanks.db'
+# dest_db_name    = 'AttendanceRanks.db'
+# dest_db_session = getDbSession(dest_db_name)
 
 def GetAttendanceOriginalRawData():
-    global srce_db_session
-    global dest_db_session
-    srce_db_session   = getDbSession(srce_db_name)
+    # global srce_db_session
+    # srce_db_session   = getDbSession(srce_db_name)
     srce_records_slct = (select(AttendanceV1).order_by('attendance_id'))
     srce_records_rslt = srce_db_session.execute(srce_records_slct).scalars().all()
     srce_records_list = [requirement.to_dict() for requirement in srce_records_rslt]

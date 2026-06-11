@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, time
 
 from sqlalchemy import select
 
@@ -17,8 +17,8 @@ def FindClosestClass(checkinDateTimeStr):
     checkinDateTime = datetime.strptime(checkinDateTimeStr, constants.fmtDateTime)
     day_of_week     = checkinDateTime.weekday() + 1
 
-    classes_stmt  = (select(Classes).where(Classes.classDayOfWeek == day_of_week))
-    classes_list  = db_session.execute(classes_stmt).scalars().all()
+    classes_stmt_1  = (select(Classes).where(Classes.classDayOfWeek == day_of_week))
+    classes_list_1  = db_session.execute(classes_stmt_1).scalars().all()
 
     print(f'checkinDateTimeStr: {checkinDateTimeStr} -- day_of_week: {day_of_week}')
 
