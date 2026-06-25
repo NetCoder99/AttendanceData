@@ -3,6 +3,9 @@
 # sqlacodegen sqlite:///C:\Users\jdugger01\AppData\Roaming\Attendance\AttendanceV2_20251107.db
 
 from services.attendance import GetAttendanceOriginalRawData
+from services.belts_procs import LoadBeltRecords
+from services.class_schedules import LoadClassTimes
+from services.student_procs import LoadStudentRecords, UpdateStudentRecords, FixMemberSinceDates
 
 #from services.table_procs_sqlite import list_all_tables, get_table_info, open_sqlite_conn, close_sqlite_conn
 
@@ -22,7 +25,17 @@ from services.attendance import GetAttendanceOriginalRawData
 if __name__ == '__main__':
     # db_path = getDbPath()
     try:
-        GetAttendanceOriginalRawData()
+        #FixMemberSinceDates()
+        UpdateStudentRecords()
+
+
+        #LoadStudentRecords()
+
+        #
+        # LoadBeltRecords()
+        # LoadClassTimes()
+        #
+        # GetAttendanceOriginalRawData()
         #ImportRequirementsRecords()
     except Exception as e:
         print(f"An error occurred: {e}")

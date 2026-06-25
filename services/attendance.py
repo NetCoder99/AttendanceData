@@ -4,39 +4,87 @@ import os
 import re
 
 from dateutil.parser import parse, ParserError
-from sqlalchemy import select, create_engine
+from sqlalchemy import select, create_engine, delete, insert, inspect
 from datetime import date, datetime
 from dateutil import parser
 
 from sqlalchemy.orm import Session
 
 import constants
-from data.Models import Ranks, Stripes, Requirements, Belts, AttendanceV1
+from data.Models import Ranks, Stripes, Requirements, Belts, AttendanceV1, Attendance, Classes, Attendance
+from services.belts_procs import GetRankAtCheckin
 from services.class_schedules import FindClosestClass
 from services.sqlite_procs import getDbSession, getDbPath, getNewDbSession
+from services.student_procs import GetStudentRecord
 
-srce_db_name    = 'AttendanceV2_20251107.db'
+#srce_db_name    = 'AttendanceV2_20251107.db'
+srce_db_name    = 'AttendanceV2_20260612.db'
 srce_db_session = getNewDbSession(srce_db_name)
 
-# dest_db_name    = 'AttendanceRanks.db'
-# dest_db_session = getDbSession(dest_db_name)
+dest_db_name    = 'AttendanceRanks.db'
+dest_db_session = getDbSession(dest_db_name)
 
 def GetAttendanceOriginalRawData():
     # global srce_db_session
     # srce_db_session   = getDbSession(srce_db_name)
-    srce_records_slct = (select(AttendanceV1).order_by('attendance_id'))
+    srce_records_slct = select(AttendanceV1).order_by('attendance_id')   #.limit(1000)
     srce_records_rslt = srce_db_session.execute(srce_records_slct).scalars().all()
     srce_records_list = [requirement.to_dict() for requirement in srce_records_rslt]
-    CheckAttendanceTimeStamps(srce_records_list)
+    updated_attendance_records = CheckAttendanceTimeStamps(srce_records_list)
+    PushAttendanceRecordsToDb(dest_db_name, updated_attendance_records)
+
     return srce_records_list
 
-def CheckAttendanceTimeStamps(attendance_records: list[dict]):
-    for attendance_record in attendance_records:
-        if not is_date(attendance_record['checkinDateTime']):
-            print(f'bad datetime: {attendance_record['checkinDateTime']}')
+def CheckAttendanceTimeStamps(old_attendance_records: list[dict]):
+    new_attendance_records = []
+    missing_badge_numbers = {}
+    existin_badge_numbers = {}
+    try:
+        for old_attendance_record in old_attendance_records:
+            if not is_date(old_attendance_record['checkinDateTime']):
+                print(f'bad datetime: {old_attendance_record['checkinDateTime']}')
+            else:
+                class_record = FindClosestClass(old_attendance_record['checkinDateTime'])
+                new_attendance_record = (CreateNewAttendanceRecord
+                                         (old_attendance_record, class_record, missing_badge_numbers, existin_badge_numbers)
+                                         )
+                new_attendance_records.append(new_attendance_record)
+
+        sorted_data = dict(sorted(missing_badge_numbers.items()))
+        DisplayMissingStudentRecords(sorted_data, old_attendance_records)
+        return new_attendance_records
+    except Exception as ex:
+        print(f'Error: {str(ex)}')
+
+def CreateNewAttendanceRecord(old_attendance_record: dict, class_record: Classes, missing_badge_numbers, existin_badge_numbers):
+    try:
+        new_attendance_record = Attendance()
+
+        new_attendance_record.badgeNumber     = old_attendance_record['badgeNumber']
+        new_attendance_record.checkinDateTime = old_attendance_record['checkinDateTime']
+        new_attendance_record.checkinDate = old_attendance_record['checkinDate']
+        new_attendance_record.checkinTime = old_attendance_record['checkinTime']
+        new_attendance_record.attendanceRankName = old_attendance_record['rankName']
+        new_attendance_record.studentName = old_attendance_record['studentName']
+
+        student_record = GetStudentRecord(old_attendance_record['badgeNumber'])
+        new_attendance_record.missingBadge = 'T'
+        if student_record is not None:
+            new_attendance_record.missingBadge = 'F'
+            existin_badge_numbers[old_attendance_record['badgeNumber']] = existin_badge_numbers.get(old_attendance_record['badgeNumber'], 0) + 1
+            new_attendance_record.studentFirstName    = student_record['firstName']
+            new_attendance_record.studentLastName     = student_record['lastName']
+            rank_at_checkin = GetRankAtCheckin(old_attendance_record)
+            if rank_at_checkin:
+                new_attendance_record.studentRankNum    = rank_at_checkin['beltId']
+                new_attendance_record.studentRankName   = rank_at_checkin['beltTitle']
         else:
-            class_weekday = FindClosestClass(attendance_record['checkinDateTime'])
-            print(f'class_weekday: {class_weekday}')
+            missing_badge_numbers[old_attendance_record['badgeNumber']] = missing_badge_numbers.get(old_attendance_record['badgeNumber'], 0) + 1
+            #print(f'No student record found: {old_attendance_record['badgeNumber']}')
+
+        return new_attendance_record
+    except Exception as ex:
+        print(f'Error: {str(ex)}')
 
 def is_date(date_string):
     try:
@@ -46,10 +94,30 @@ def is_date(date_string):
     except (ParserError, ValueError, TypeError):
         return False
 
-    # try:
-    #     date.fromisoformat(date_string)
-    #     return True
-    # except ValueError:
-    #     return False
 
+def DisplayMissingStudentRecords(missing_badge_numbers: dict, old_attendance_records: list[dict]):
+    for missing_badge_number, attendance_count in missing_badge_numbers.items():
+        old_attendance_record = GetOldStudentDetails(missing_badge_number, old_attendance_records)
+        print (f'badge_number-{missing_badge_number} : student Name-{old_attendance_record['studentName']}')
+
+def GetOldStudentDetails(badge_number, old_attendance_records: list[dict]):
+    filter_tmp = [attendance_record for attendance_record in old_attendance_records if attendance_record['badgeNumber'] == badge_number]
+    if len(filter_tmp) > 0:
+        return filter_tmp[0]
+    else:
+        return None
+
+def PushAttendanceRecordsToDb(db_name: str, attendance_records: list[Attendance], truncate_table: bool = True):
+    engine    = create_engine(f'sqlite:///{getDbPath(db_name)}', echo=True)
+    # inspector = inspect(engine)
+    # columns = inspector.get_columns('Attendance')
+    if truncate_table:
+        with engine.connect() as connection:
+            with connection.begin():  # Manages transaction commit automatically
+                connection.execute(delete(Attendance))
+                #connection.commit()
+    with engine.connect() as connection:
+        attendance_records_list = [attendance_record.to_dict() for attendance_record in attendance_records]
+        connection.execute(insert(Attendance), attendance_records_list)
+        connection.commit()
 
