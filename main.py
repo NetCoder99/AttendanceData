@@ -25,17 +25,21 @@ from services.student_procs import LoadStudentRecords, UpdateStudentRecords, Fix
 if __name__ == '__main__':
     # db_path = getDbPath()
     try:
-        #FixMemberSinceDates()
-        UpdateStudentRecords()
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # Misc import functions
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # FixMemberSinceDates()
+        # UpdateStudentRecords()
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-        #LoadStudentRecords()
-
-        #
-        # LoadBeltRecords()
-        # LoadClassTimes()
-        #
-        # GetAttendanceOriginalRawData()
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # Special for attendance records
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        LoadStudentRecords()
+        LoadBeltRecords()
+        LoadClassTimes()
+        GetAttendanceOriginalRawData()
         #ImportRequirementsRecords()
     except Exception as e:
         print(f"An error occurred: {e}")

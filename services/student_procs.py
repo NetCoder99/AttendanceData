@@ -35,12 +35,12 @@ def UpdateStudentRecords():
     srce_student_records = srce_db_session.scalars(select(StudentsV1)).all()
 
     for student_record in srce_student_records:
-        ProcessStudentUpdate(student_record)
+        ProcessStudentUpsert(student_record)
 
 # ------------------------------------------------------------------
 # Outer loop to iterate over the imported/new student records
 # ------------------------------------------------------------------
-def ProcessStudentUpdate(student_record: StudentsV1):
+def ProcessStudentUpsert(student_record: StudentsV1):
     if student_record.firstName.endswith('\n'):
         student_record.firstName = student_record.firstName.strip()
     student_record_tmp = dest_db_session.scalars(select(Students).where(Students.badgeNumber == student_record.badgeNumber)).all()
@@ -52,17 +52,17 @@ def ProcessStudentUpdate(student_record: StudentsV1):
     else:
         raise Exception("Invalid dest record count!")
 
-insert_count = 0
+#insert_count = 0
 # ------------------------------------------------------------------
 # Create, populate and insert the ORM student record
 # ------------------------------------------------------------------
 def InsertNewStudentRecord(student_record_srce: StudentsV1):
-    global insert_count
+    #global insert_count
     try:
-        insert_count += 1
-        if insert_count > 4:
-            raise Exception("Count limit exceeded!")
-        print(f'Insert new student: {student_record_srce.badgeNumber} :: {student_record_srce.firstName} {student_record_srce.lastName}')
+        # insert_count += 1
+        # if insert_count > 4:
+        #     raise Exception("Count limit exceeded!")
+        print(f'Inserting new student: {student_record_srce.badgeNumber} :: {student_record_srce.firstName} {student_record_srce.lastName}')
         student_record_dest = Students()
         student_record_dest.badgeNumber = student_record_srce.badgeNumber
         student_record_dest.firstName   = student_record_srce.firstName
@@ -97,7 +97,7 @@ def InsertNewStudentRecord(student_record_srce: StudentsV1):
         dest_db_session.add(student_record_dest)
         dest_db_session.commit()
 
-        print(student_record_dest.to_dict())
+        print(f'Was inserted : {student_record_dest.to_dict()}')
     except Exception as ex:
         print(f'{str(ex)}')
 

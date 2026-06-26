@@ -21,7 +21,8 @@ from services.student_procs import GetStudentRecord
 srce_db_name    = 'AttendanceV2_20260612.db'
 srce_db_session = getNewDbSession(srce_db_name)
 
-dest_db_name    = 'AttendanceRanks.db'
+#dest_db_name    = 'AttendanceRanks.db'
+dest_db_name    = 'AttendanceV3.db'
 dest_db_session = getDbSession(dest_db_name)
 
 def GetAttendanceOriginalRawData():
@@ -56,16 +57,20 @@ def CheckAttendanceTimeStamps(old_attendance_records: list[dict]):
     except Exception as ex:
         print(f'Error: {str(ex)}')
 
-def CreateNewAttendanceRecord(old_attendance_record: dict, class_record: Classes, missing_badge_numbers, existin_badge_numbers):
+def CreateNewAttendanceRecord(old_attendance_record: dict, class_record: dict, missing_badge_numbers, existin_badge_numbers):
     try:
         new_attendance_record = Attendance()
 
-        new_attendance_record.badgeNumber     = old_attendance_record['badgeNumber']
-        new_attendance_record.checkinDateTime = old_attendance_record['checkinDateTime']
-        new_attendance_record.checkinDate = old_attendance_record['checkinDate']
-        new_attendance_record.checkinTime = old_attendance_record['checkinTime']
+        new_attendance_record.badgeNumber      = old_attendance_record['badgeNumber']
+        new_attendance_record.checkinDateTime  = old_attendance_record['checkinDateTime']
+        new_attendance_record.checkinDate      = old_attendance_record['checkinDate']
+
+        checkInDayOfWeek = parse(old_attendance_record['checkinDateTime']).weekday() + 1
+        new_attendance_record.checkinDayOfWeek = checkInDayOfWeek
+
+        new_attendance_record.checkinTime        = old_attendance_record['checkinTime']
         new_attendance_record.attendanceRankName = old_attendance_record['rankName']
-        new_attendance_record.studentName = old_attendance_record['studentName']
+        new_attendance_record.studentName        = old_attendance_record['studentName']
 
         student_record = GetStudentRecord(old_attendance_record['badgeNumber'])
         new_attendance_record.missingBadge = 'T'
@@ -82,6 +87,12 @@ def CreateNewAttendanceRecord(old_attendance_record: dict, class_record: Classes
             missing_badge_numbers[old_attendance_record['badgeNumber']] = missing_badge_numbers.get(old_attendance_record['badgeNumber'], 0) + 1
             #print(f'No student record found: {old_attendance_record['badgeNumber']}')
 
+        if class_record is not None:
+            new_attendance_record.classNum   = class_record['classNum']
+            new_attendance_record.className  = class_record['className']
+            new_attendance_record.classStartTime  = class_record['classStartTime']
+            new_attendance_record.styleNum        = class_record['styleNum']
+            new_attendance_record.styleName       = class_record['styleName']
         return new_attendance_record
     except Exception as ex:
         print(f'Error: {str(ex)}')

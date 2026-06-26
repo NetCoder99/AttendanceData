@@ -1,4 +1,4 @@
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 
 from dateutil.parser import parse
 from sqlalchemy import select
@@ -25,12 +25,12 @@ def FindClosestClass(checkinDateTimeStr):
     checkinDateTime = datetime.strptime(checkinDateTimeStr, constants.fmtDateTime)
     day_of_week     = checkinDateTime.weekday() + 1
     classes_by_day  = [classes for classes in class_schedules if classes['classDayOfWeek'] == day_of_week]
-    #attendance_datetime = parse(checkinDateTimeStr, fuzzy=False)
-
     for class_by_day in classes_by_day:
         class_start_datetime      = parse(class_by_day['classStartTime'], fuzzy=False)
-        class_finis_datetime      = parse(class_by_day['classFinisTime'], fuzzy=False)
-        if class_start_datetime.time() <= checkinDateTime.time() <= class_finis_datetime.time():
+        checkin_start_time      = class_start_datetime - timedelta(minutes=20)
+        checkin_finis_time      = class_start_datetime + timedelta(minutes=15)
+        #print(f'{checkin_start_time.time()} : {checkinDateTime.time()} : {checkin_finis_time.time()}')
+        if checkin_start_time.time() <= checkinDateTime.time() <= checkin_finis_time.time():
             return class_by_day
     return None
 

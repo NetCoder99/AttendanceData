@@ -129,6 +129,7 @@ class Attendance(Base):
     badgeNumber      : Mapped[Optional[int]] = mapped_column(Integer)
     checkinDateTime  : Mapped[Optional[str]] = mapped_column(Text)
     checkinDate      : Mapped[Optional[str]] = mapped_column(Text)
+    checkinDayOfWeek : Mapped[Optional[str]] = mapped_column(Integer)
     checkinTime      : Mapped[Optional[str]] = mapped_column(Text)
     studentFirstName : Mapped[Optional[str]] = mapped_column(Text)
     studentLastName  : Mapped[Optional[str]] = mapped_column(Text)
@@ -141,6 +142,7 @@ class Attendance(Base):
     className          : Mapped[Optional[str]] = mapped_column(Text)
     classStartTime     : Mapped[Optional[str]] = mapped_column(Text)
     styleNum           : Mapped[Optional[int]] = mapped_column(Integer)
+    styleName          : Mapped[Optional[int]] = mapped_column(Integer)
     appliesPromotion   : Mapped[Optional[str]] = mapped_column(Text)
     attendanceRankName : Mapped[Optional[str]] = mapped_column(Text)
     studentName        : Mapped[Optional[str]] = mapped_column(Text)
@@ -152,6 +154,7 @@ class Attendance(Base):
             'badgeNumber': self.badgeNumber,
             'checkinDateTime': self.checkinDateTime,
             'checkinDate': self.checkinDate,
+            'checkinDayOfWeek' : self.checkinDayOfWeek,
             'checkinTime': self.checkinTime,
             'studentName' : self.studentName,
             'studentFirstName': self.studentFirstName,
@@ -164,7 +167,8 @@ class Attendance(Base):
             'classNum': self.classNum,
             'className': self.className,
             'classStartTime': self.classStartTime,
-            'styleNum': self.styleNum,
+            'styleNum'  : self.styleNum,
+            'styleName' : self.styleName,
             'appliesPromotion': self.appliesPromotion,
             'attendanceRankName' : self.attendanceRankName,
             'missingBadge' : self.missingBadge
