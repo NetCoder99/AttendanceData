@@ -2,7 +2,7 @@
 # sqlacodegen sqlite:///C:\Users\jdugger01\AppData\Roaming\Attendance\AttendanceV3.db
 # sqlacodegen sqlite:///C:\Users\jdugger01\AppData\Roaming\Attendance\AttendanceV2_20251107.db
 
-from services.attendance import GetAttendanceOriginalRawData
+from services.attendance import ImportAttendanceOriginalRawData
 from services.belts_procs import LoadBeltRecords
 from services.class_schedules import LoadClassTimes
 from services.student_procs import LoadStudentRecords, UpdateStudentRecords, FixMemberSinceDates
@@ -39,7 +39,7 @@ if __name__ == '__main__':
         LoadStudentRecords()
         LoadBeltRecords()
         LoadClassTimes()
-        GetAttendanceOriginalRawData()
+        ImportAttendanceOriginalRawData()
         #ImportRequirementsRecords()
     except Exception as e:
         print(f"An error occurred: {e}")

@@ -25,7 +25,7 @@ srce_db_session = getNewDbSession(srce_db_name)
 dest_db_name    = 'AttendanceV3.db'
 dest_db_session = getDbSession(dest_db_name)
 
-def GetAttendanceOriginalRawData():
+def ImportAttendanceOriginalRawData():
     # global srce_db_session
     # srce_db_session   = getDbSession(srce_db_name)
     srce_records_slct = select(AttendanceV1).order_by('attendance_id')   #.limit(1000)
